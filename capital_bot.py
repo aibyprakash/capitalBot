@@ -602,14 +602,14 @@ def main() -> None:
     parser.add_argument("--bos-lookback", type=int, default=3)
     args = parser.parse_args()
 
+    if not args.epic and not args.show_accounts:
+        return
+
     api_key = os.environ.get("CAPITAL_API_KEY")
     identifier = os.environ.get("CAPITAL_IDENTIFIER")
     password = os.environ.get("CAPITAL_PASSWORD")
     if not api_key or not identifier or not password:
         raise SystemExit("Missing CAPITAL_API_KEY, CAPITAL_IDENTIFIER, or CAPITAL_PASSWORD env vars")
-
-    if not args.epic and not args.show_accounts:
-        raise SystemExit("At least one --epic is required unless --show-accounts is set.")
 
     base_url = DEMO_BASE_URL if args.demo else args.base_url
     client = CapitalComClient(api_key, identifier, password, base_url)

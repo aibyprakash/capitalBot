@@ -78,6 +78,7 @@ class RangeSweepSignal:
     timestamp: Optional[datetime]
 
 
+
 class CapitalComClient:
     def __init__(self, api_key: str, identifier: str, password: str, base_url: str) -> None:
         self.api_key = api_key
@@ -601,6 +602,7 @@ def main() -> None:
     base_url = DEMO_BASE_URL if args.demo else args.base_url
     client = CapitalComClient(api_key, identifier, password, base_url)
     client.login()
+
 
         if args.mode == "support_resistance":
             end = datetime.utcnow()

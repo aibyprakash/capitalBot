@@ -78,14 +78,6 @@ class RangeSweepSignal:
     timestamp: Optional[datetime]
 
 
-@dataclass
-class AccountSummary:
-    account_id: str
-    name: str
-    balance: float
-    available: float
-
-
 class CapitalComClient:
     def __init__(self, api_key: str, identifier: str, password: str, base_url: str) -> None:
         self.api_key = api_key
@@ -570,7 +562,7 @@ def _format_zone(zone: SupportResistanceZone) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Capital.com support/resistance bot")
-    parser.add_argument("--epic", action="append", help="Market epic (e.g., FX.EURUSD)")
+
     parser.add_argument("--mode", choices=["support_resistance", "range_sweep"], default="support_resistance")
     parser.add_argument("--resolution", default="MINUTE", help="Candle resolution (support/resistance)")
     parser.add_argument("--hours", type=int, default=6, help="Lookback window in hours (support/resistance)")
@@ -578,9 +570,7 @@ def main() -> None:
     parser.add_argument("--exec-resolution", default="MINUTE", help="Execution timeframe resolution")
     parser.add_argument("--range-hours", type=int, default=24, help="Range lookback window in hours")
     parser.add_argument("--exec-hours", type=int, default=6, help="Execution lookback window in hours")
-    parser.add_argument("--show-accounts", action="store_true", help="Fetch and print account balances")
-    parser.add_argument("--demo", action="store_true", help="Use the Capital.com demo API base URL")
-    parser.add_argument("--base-url", default=DEFAULT_BASE_URL)
+
     parser.add_argument("--lookback", type=int, default=3)
     parser.add_argument("--zone-tolerance", type=float, default=0.002)
     parser.add_argument("--breakout-threshold", type=float, default=0.001)
@@ -612,23 +602,6 @@ def main() -> None:
     client = CapitalComClient(api_key, identifier, password, base_url)
     client.login()
 
-    if args.show_accounts:
-        accounts = client.get_accounts()
-        if not accounts:
-            print("No accounts returned.")
-        else:
-            print("\nAccounts:")
-            for account in accounts:
-                print(
-                    "  - {name} ({account_id}) balance={balance:.2f} available={available:.2f}".format(
-                        name=account.name or "Unknown",
-                        account_id=account.account_id,
-                        balance=account.balance,
-                        available=account.available,
-                    )
-                )
-
-    for epic in args.epic or []:
         if args.mode == "support_resistance":
             end = datetime.utcnow()
             start = end - timedelta(hours=args.hours)

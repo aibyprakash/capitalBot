@@ -26,10 +26,32 @@ export CAPITAL_IDENTIFIER="your_email_or_username"
 export CAPITAL_PASSWORD="your_password"
 ```
 
+Optionally, verify the exports before running the bot:
+
+```bash
+python - <<'PY'
+import os
+missing = [key for key in ("CAPITAL_API_KEY", "CAPITAL_IDENTIFIER", "CAPITAL_PASSWORD") if not os.getenv(key)]
+print("Missing:", ", ".join(missing) if missing else "none")
+PY
+```
+
 3. Run the bot:
 
 ```bash
 python capital_bot.py --epic FX.EURUSD --resolution MINUTE --hours 6
+```
+
+To verify credentials and fetch your account balances (including demo, if your credentials point to a demo account):
+
+```bash
+python capital_bot.py --epic FX.EURUSD --show-accounts
+```
+
+To connect to the demo API, add `--demo`:
+
+```bash
+python capital_bot.py --demo --show-accounts
 ```
 
 ## Configuration
@@ -39,6 +61,22 @@ The CLI accepts parameters to tune the analysis:
 - `--lookback`: window size for swing detection.
 - `--zone-tolerance`: percent tolerance for clustering zones (e.g., `0.002` = 0.2%).
 - `--breakout-threshold`: percent threshold beyond a zone to confirm breakout.
+- `--mode`: switch between `support_resistance` and `range_sweep`.
+
+### Range sweep mode
+
+Use range + execution timeframes to detect range/sweep/BOS signals:
+
+```bash
+python capital_bot.py \
+  --mode range_sweep \
+  --epic METALS.GOLD \
+  --epic ENERGY.CRUDE \
+  --range-resolution MINUTE_15 \
+  --exec-resolution MINUTE \
+  --range-hours 24 \
+  --exec-hours 6
+```
 
 ## Notes
 

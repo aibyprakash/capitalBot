@@ -78,6 +78,14 @@ class RangeSweepSignal:
     timestamp: Optional[datetime]
 
 
+@dataclass
+class AccountSummary:
+    account_id: str
+    name: str
+    balance: float
+    available: float
+
+
 
 class CapitalComClient:
     def __init__(self, api_key: str, identifier: str, password: str, base_url: str) -> None:
@@ -564,6 +572,10 @@ def _format_zone(zone: SupportResistanceZone) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description="Capital.com support/resistance bot")
 
+    parser.add_argument("--epic", action="append", help="Market epic (repeatable)")
+    parser.add_argument("--show-accounts", action="store_true", help="List account balances")
+    parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="Capital.com REST API base URL")
+    parser.add_argument("--demo", action="store_true", help="Use the demo API base URL")
     parser.add_argument("--mode", choices=["support_resistance", "range_sweep"], default="support_resistance")
     parser.add_argument("--resolution", default="MINUTE", help="Candle resolution (support/resistance)")
     parser.add_argument("--hours", type=int, default=6, help="Lookback window in hours (support/resistance)")
@@ -590,20 +602,39 @@ def main() -> None:
     parser.add_argument("--bos-lookback", type=int, default=3)
     args = parser.parse_args()
 
+    if not args.epic and not args.show_accounts:
+        return
+
     api_key = os.environ.get("CAPITAL_API_KEY")
     identifier = os.environ.get("CAPITAL_IDENTIFIER")
     password = os.environ.get("CAPITAL_PASSWORD")
     if not api_key or not identifier or not password:
         raise SystemExit("Missing CAPITAL_API_KEY, CAPITAL_IDENTIFIER, or CAPITAL_PASSWORD env vars")
 
-    if not args.epic and not args.show_accounts:
-        raise SystemExit("At least one --epic is required unless --show-accounts is set.")
-
     base_url = DEMO_BASE_URL if args.demo else args.base_url
     client = CapitalComClient(api_key, identifier, password, base_url)
     client.login()
 
+    if args.show_accounts:
+        accounts = client.get_accounts()
+        env_label = "demo" if args.demo else "live"
+        print(f"\nAccounts ({env_label}):")
+        if accounts:
+            for account in accounts:
+                print(
+                    "  - {name} ({account_id}) balance={balance:.2f} available={available:.2f}".format(
+                        name=account.name,
+                        account_id=account.account_id,
+                        balance=account.balance,
+                        available=account.available,
+                    )
+                )
+        else:
+            print("  - no accounts returned")
+        if not args.epic:
+            return
 
+    for epic in args.epic:
         if args.mode == "support_resistance":
             end = datetime.utcnow()
             start = end - timedelta(hours=args.hours)

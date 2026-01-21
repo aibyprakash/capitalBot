@@ -617,7 +617,7 @@ def main() -> None:
 
     if args.show_accounts:
         accounts = client.get_accounts()
-        print("\nAccounts:")
+
         if accounts:
             for account in accounts:
                 print(

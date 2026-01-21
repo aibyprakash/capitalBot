@@ -42,6 +42,18 @@ PY
 python capital_bot.py --epic FX.EURUSD --resolution MINUTE --hours 6
 ```
 
+To verify credentials and fetch your account balances (including demo, if your credentials point to a demo account):
+
+```bash
+python capital_bot.py --epic FX.EURUSD --show-accounts
+```
+
+To connect to the demo API, add `--demo`:
+
+```bash
+python capital_bot.py --demo --show-accounts
+```
+
 ## Configuration
 
 The CLI accepts parameters to tune the analysis:

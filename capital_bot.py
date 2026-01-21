@@ -15,6 +15,10 @@ from typing import Iterable, List, Optional, Sequence
 import requests
 
 
+DEFAULT_BASE_URL = "https://api-capital.backend-capital.com"
+DEMO_BASE_URL = "https://demo-api-capital.backend-capital.com"
+
+
 def _parse_iso_time(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
@@ -121,6 +125,23 @@ class CapitalComClient:
                 )
             )
         return bars
+
+    def get_accounts(self) -> List[AccountSummary]:
+        response = self.session.get(f"{self.base_url}/api/v1/accounts")
+        response.raise_for_status()
+        data = response.json()
+        accounts: List[AccountSummary] = []
+        for account in data.get("accounts", []):
+            balance = account.get("balance", {})
+            accounts.append(
+                AccountSummary(
+                    account_id=str(account.get("accountId", "")),
+                    name=str(account.get("accountName", "")),
+                    balance=float(balance.get("balance", 0)),
+                    available=float(balance.get("available", 0)),
+                )
+            )
+        return accounts
 
 
 class SupportResistanceAnalyzer:
@@ -541,7 +562,7 @@ def _format_zone(zone: SupportResistanceZone) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Capital.com support/resistance bot")
-    parser.add_argument("--epic", action="append", required=True, help="Market epic (e.g., FX.EURUSD)")
+
     parser.add_argument("--mode", choices=["support_resistance", "range_sweep"], default="support_resistance")
     parser.add_argument("--resolution", default="MINUTE", help="Candle resolution (support/resistance)")
     parser.add_argument("--hours", type=int, default=6, help="Lookback window in hours (support/resistance)")
@@ -549,7 +570,7 @@ def main() -> None:
     parser.add_argument("--exec-resolution", default="MINUTE", help="Execution timeframe resolution")
     parser.add_argument("--range-hours", type=int, default=24, help="Range lookback window in hours")
     parser.add_argument("--exec-hours", type=int, default=6, help="Execution lookback window in hours")
-    parser.add_argument("--base-url", default="https://api-capital.backend-capital.com")
+
     parser.add_argument("--lookback", type=int, default=3)
     parser.add_argument("--zone-tolerance", type=float, default=0.002)
     parser.add_argument("--breakout-threshold", type=float, default=0.001)
@@ -574,10 +595,13 @@ def main() -> None:
     if not api_key or not identifier or not password:
         raise SystemExit("Missing CAPITAL_API_KEY, CAPITAL_IDENTIFIER, or CAPITAL_PASSWORD env vars")
 
-    client = CapitalComClient(api_key, identifier, password, args.base_url)
+    if not args.epic and not args.show_accounts:
+        raise SystemExit("At least one --epic is required unless --show-accounts is set.")
+
+    base_url = DEMO_BASE_URL if args.demo else args.base_url
+    client = CapitalComClient(api_key, identifier, password, base_url)
     client.login()
 
-    for epic in args.epic:
         if args.mode == "support_resistance":
             end = datetime.utcnow()
             start = end - timedelta(hours=args.hours)

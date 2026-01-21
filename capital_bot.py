@@ -617,6 +617,7 @@ def main() -> None:
 
     if args.show_accounts:
         accounts = client.get_accounts()
+
         env_label = "demo" if args.demo else "live"
         print(f"\nAccounts ({env_label}):")
         if accounts:
